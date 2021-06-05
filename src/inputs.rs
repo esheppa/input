@@ -400,7 +400,8 @@ impl Default for Month {
     fn default() -> Month {
         Month {
             validations: crate::Validations::new(),
-            ..Default::default()
+            year: Year::default(),
+            month: RelativeMonth::default(),
         }
     }
 }
@@ -516,7 +517,8 @@ impl Default for Quarter {
     fn default() -> Quarter {
         Quarter {
             validations: crate::Validations::new(),
-            ..Default::default()
+            year: Year::default(),
+            quarter: RelativeQuarter::default(),
         }
     }
 }
