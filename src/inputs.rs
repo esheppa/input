@@ -1,6 +1,10 @@
 use chrono::Datelike;
 use resolution::DateResolution as DateResolutionTrait;
-use std::{cmp, collections, convert, error, fmt, marker, num};
+use std::{
+    cmp, collections,
+    convert::{self, TryFrom},
+    error, fmt, marker, num,
+};
 
 #[derive(Debug)]
 pub struct SelectError {
@@ -27,13 +31,20 @@ impl error::Error for SelectError {}
 
 pub type BasicSelect = Select<convert::Infallible, String>;
 
-pub struct Select<E: error::Error + Sync + Send + 'static, O: fmt::Display + Ord + std::str::FromStr<Err = E>> {
+pub struct Select<
+    E: error::Error + Sync + Send + 'static,
+    O: fmt::Display + Ord + std::str::FromStr<Err = E>,
+> {
     input: String,
     options: collections::BTreeSet<O>,
     o: marker::PhantomData<O>,
 }
 
-impl<E: error::Error + Sync + Send + 'static, O: fmt::Display + Ord + std::str::FromStr<Err = E>> Select<E, O> {
+impl<
+        E: error::Error + Sync + Send + 'static,
+        O: fmt::Display + Ord + std::str::FromStr<Err = E>,
+    > Select<E, O>
+{
     pub fn get_input(&self) -> &str {
         &self.input
     }
@@ -46,12 +57,17 @@ impl<E: error::Error + Sync + Send + 'static, O: fmt::Display + Ord + std::str::
     }
 }
 
-impl<E: error::Error + Sync + Send + 'static, O: fmt::Display + Ord + std::str::FromStr<Err = E>> crate::UserInput
-    for Select<E, O>
+impl<
+        E: error::Error + Sync + Send + 'static,
+        O: fmt::Display + Ord + std::str::FromStr<Err = E>,
+    > crate::UserInput for Select<E, O>
 {
     type Output = O;
     type Input = String;
 
+    fn set_value(&mut self, data: O) {
+        self.input = data.to_string();
+    }
     fn update(&mut self, input: Self::Input) {
         self.input = input;
     }
@@ -70,7 +86,7 @@ impl<E: error::Error + Sync + Send + 'static, O: fmt::Display + Ord + std::str::
 
 pub struct RelationalSelect<
     E: error::Error + Sync + Send + 'static,
-    K: std::str::FromStr<Err = E> + cmp::Ord,
+    K: fmt::Display + std::str::FromStr<Err = E> + cmp::Ord,
     V,
 > {
     input: String,
@@ -78,8 +94,11 @@ pub struct RelationalSelect<
     k: marker::PhantomData<K>,
 }
 
-impl<E: error::Error + Sync + Send + 'static, K: std::str::FromStr<Err = E> + cmp::Ord, V>
-    RelationalSelect<E, K, V>
+impl<
+        E: error::Error + Sync + Send + 'static,
+        K: fmt::Display + std::str::FromStr<Err = E> + cmp::Ord,
+        V,
+    > RelationalSelect<E, K, V>
 {
     pub fn get_input(&self) -> &str {
         &self.input
@@ -93,12 +112,18 @@ impl<E: error::Error + Sync + Send + 'static, K: std::str::FromStr<Err = E> + cm
     }
 }
 
-impl<E: error::Error + Sync + Send + 'static, K: std::str::FromStr<Err = E> + cmp::Ord, V>
-    crate::UserInput for RelationalSelect<E, K, V>
+impl<
+        E: error::Error + Sync + Send + 'static,
+        K: fmt::Display + std::str::FromStr<Err = E> + cmp::Ord,
+        V,
+    > crate::UserInput for RelationalSelect<E, K, V>
 {
     type Output = K;
     type Input = String;
 
+    fn set_value(&mut self, data: K) {
+        self.input = data.to_string();
+    }
     fn update(&mut self, input: Self::Input) {
         self.input = input;
     }
@@ -160,6 +185,9 @@ where
 {
     type Output = O;
     type Input = String;
+    fn set_value(&mut self, data: Self::Output) {
+        self.input = data.to_string();
+    }
     fn update(&mut self, input: Self::Input) {
         self.input = input;
     }
@@ -210,6 +238,9 @@ impl Default for NaiveDate {
 impl crate::UserInput for NaiveDate {
     type Output = chrono::NaiveDate;
     type Input = String;
+    fn set_value(&mut self, data: Self::Output) {
+        self.input = data.format(self.format).to_string();
+    }
     fn update(&mut self, input: Self::Input) {
         self.input = input;
     }
@@ -256,6 +287,9 @@ impl Date {
 impl crate::UserInput for Date {
     type Output = resolution::Date;
     type Input = String;
+    fn set_value(&mut self, data: Self::Output) {
+        self.input = data.start().format(self.format).to_string();
+    }
     fn update(&mut self, input: Self::Input) {
         self.input = input;
     }
@@ -295,6 +329,9 @@ impl Year {
 impl crate::UserInput for Year {
     type Output = resolution::Year;
     type Input = String;
+    fn set_value(&mut self, data: Self::Output) {
+        self.input = data.year_num().to_string();
+    }
     fn update(&mut self, input: Self::Input) {
         self.input = input;
     }
@@ -331,6 +368,9 @@ impl RelativeMonth {
 impl crate::UserInput for RelativeMonth {
     type Output = u32;
     type Input = String;
+    fn set_value(&mut self, data: Self::Output) {
+        self.input = data.to_string();
+    }
     fn update(&mut self, input: Self::Input) {
         self.input = input;
     }
@@ -394,6 +434,10 @@ impl Month {
 impl crate::UserInput for Month {
     type Output = resolution::Month;
     type Input = MonthMsg;
+    fn set_value(&mut self, data: Self::Output) {
+        self.year.set_value(data.year());
+        self.month.set_value(data.month_num());
+    }
     fn update(&mut self, input: Self::Input) {
         match input {
             MonthMsg::Year(y) => self.year.input = y,
@@ -431,6 +475,9 @@ impl RelativeQuarter {
 impl crate::UserInput for RelativeQuarter {
     type Output = u32;
     type Input = String;
+    fn set_value(&mut self, data: Self::Output) {
+        self.input = data.to_string();
+    }
     fn update(&mut self, input: Self::Input) {
         self.input = input;
     }
@@ -503,6 +550,10 @@ impl Quarter {
 impl crate::UserInput for Quarter {
     type Output = resolution::Quarter;
     type Input = QuarterMsg;
+    fn set_value(&mut self, data: Self::Output) {
+        self.year.set_value(data.year());
+        self.quarter.set_value(data.quarter_num());
+    }
     fn update(&mut self, input: Self::Input) {
         match input {
             QuarterMsg::Year(y) => self.year.input = y,
@@ -542,6 +593,11 @@ where
             input,
         }
     }
+    pub fn from_data(data: R) -> DateResolution<I, R> {
+        let mut input = I::default();
+        input.set_value(data);
+        DateResolution::new(input)
+    }
 }
 
 impl<I, R> From<I> for DateResolution<I, R>
@@ -571,6 +627,9 @@ where
 {
     type Output = I::Output;
     type Input = I::Input;
+    fn set_value(&mut self, data: Self::Output) {
+        self.input.set_value(data);
+    }
     fn update(&mut self, input: Self::Input) {
         self.input.update(input);
     }
@@ -606,16 +665,36 @@ where
 {
     pub fn new(
         data: resolution::TimeRange<R>,
-        dr_input: I,
+        mut dr_input: I,
         length_validations: crate::Validations<u32>,
         range_validations: crate::Validations<resolution::TimeRange<R>>,
     ) -> TimeRange<I, R> {
+        dr_input.set_value(data.start());
+        let date_resolution = DateResolution::new(dr_input);
         TimeRange {
             _r: marker::PhantomData,
-            date_resolution: DateResolution::new(dr_input),
-            length: Integer::new(&1, crate::Validations::from_vec(vec![greater_than_zero])),
+            date_resolution,
+            length: Integer::new(
+                &u32::try_from(data.len()).unwrap(),
+                crate::Validations::from_vec(vec![greater_than_zero]),
+            ),
             length_validations,
             range_validations,
+        }
+    }
+}
+impl<I, R> Default for TimeRange<I, R>
+where
+    R: resolution::DateResolution,
+    I: crate::UserInput<Output = R> + Default,
+{
+    fn default() -> TimeRange<I, R> {
+        TimeRange {
+            _r: marker::PhantomData,
+            date_resolution: DateResolution::default(),
+            length: Integer::new(&1, crate::Validations::from_vec(vec![greater_than_zero])),
+            length_validations: crate::Validations::new(),
+            range_validations: crate::Validations::new(),
         }
     }
 }
@@ -625,7 +704,10 @@ where
     R: resolution::DateResolution,
     I: crate::UserInput<Output = R> + Default,
 {
-    DateResolution(I::Input),
+    DateResolution {
+        input: I::Input,
+        _r: marker::PhantomData<R>,
+    },
     Length(String),
 }
 
@@ -636,9 +718,13 @@ where
 {
     type Output = resolution::TimeRange<R>;
     type Input = TimeRangeMsg<I, R>;
+    fn set_value(&mut self, data: Self::Output) {
+        self.length.set_value(u32::try_from(data.len()).unwrap());
+        self.date_resolution.set_value(data.start());
+    }
     fn update(&mut self, input: Self::Input) {
         match input {
-            TimeRangeMsg::DateResolution(input) => self.date_resolution.update(input),
+            TimeRangeMsg::DateResolution { input, .. } => self.date_resolution.update(input),
             TimeRangeMsg::Length(input) => self.length.update(input),
         }
     }

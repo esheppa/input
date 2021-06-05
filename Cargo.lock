@@ -147,7 +147,7 @@ checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 [[package]]
 name = "resolution"
 version = "0.1.0"
-source = "git+https://github.com/esheppa/resolution?rev=3c2fa#3c2fa9e395f3fb049e4964ef50f725723b1eedf5"
+source = "git+https://github.com/esheppa/resolution?rev=3c2fa9e#3c2fa9e395f3fb049e4964ef50f725723b1eedf5"
 dependencies = [
  "chrono",
  "chrono-tz",
