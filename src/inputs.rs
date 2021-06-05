@@ -600,6 +600,9 @@ where
         input.set_value(data);
         DateResolution::new(input)
     }
+    pub fn get_input(&self) -> &I {
+        &self.input
+    }
 }
 
 impl<I, R> From<I> for DateResolution<I, R>
@@ -683,6 +686,12 @@ where
             length_validations,
             range_validations,
         }
+    }
+    pub fn get_length(&self) -> &Integer<u32> {
+        &self.length
+    }
+    pub fn get_date_resolution(&self) -> &DateResolution<I, R> {
+        &self.date_resolution
     }
 }
 impl<I, R> Default for TimeRange<I, R>
