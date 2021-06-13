@@ -55,6 +55,9 @@ impl<
             o: marker::PhantomData,
         }
     }
+    pub fn iter_options(&self) -> impl Iterator<Item = &O> {
+        self.options.iter()
+    }
 }
 
 impl<
@@ -87,7 +90,7 @@ impl<
 pub struct RelationalSelect<
     E: error::Error + Sync + Send + 'static,
     K: fmt::Display + std::str::FromStr<Err = E> + cmp::Ord,
-    V,
+    V: fmt::Display,
 > {
     input: String,
     options: collections::BTreeMap<K, V>,
@@ -97,7 +100,7 @@ pub struct RelationalSelect<
 impl<
         E: error::Error + Sync + Send + 'static,
         K: fmt::Display + std::str::FromStr<Err = E> + cmp::Ord,
-        V,
+        V: fmt::Display,
     > RelationalSelect<E, K, V>
 {
     pub fn get_input(&self) -> &str {
@@ -110,12 +113,15 @@ impl<
             k: marker::PhantomData,
         }
     }
+    pub fn iter_options(&self) -> impl Iterator<Item = (&K, &V)> {
+        self.options.iter()
+    }
 }
 
 impl<
         E: error::Error + Sync + Send + 'static,
         K: fmt::Display + std::str::FromStr<Err = E> + cmp::Ord,
-        V,
+        V: fmt::Display,
     > crate::UserInput for RelationalSelect<E, K, V>
 {
     type Output = K;
