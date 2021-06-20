@@ -14,4 +14,4 @@ itertools = "0.10"
 
 [dependencies.resolution]
 git = "https://github.com/esheppa/resolution"
-rev = "3c2fa"
+rev = "3c2fa9e"

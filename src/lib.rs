@@ -1,4 +1,4 @@
-use std::{collections, error, fmt, result};
+use std::{collections, error, result};
 
 pub mod inputs;
 
@@ -142,7 +142,7 @@ where
 pub type Result<T> = result::Result<T, Error>;
 
 // principals of input backing:
-// 1. View parts must be created manually by the user (to allow layout etc - implicit here is that it is up to the user to ensure 
+// 1. View parts must be created manually by the user (to allow layout etc - implicit here is that it is up to the user to ensure
 //    all inputs are created)
 // 2. Prebuilt functions that create the inputs should be used to create the view
 // 3. It should be difficult for the user to create inputs that message non-existant fields.
@@ -153,9 +153,8 @@ pub type Result<T> = result::Result<T, Error>;
 // 7. Allow deriving ToInputMap and FromInputMap
 // 8. Each datatype in the main struct should implement ui::Input trait to allow for ToInputMap to work
 // 9. Message type should always be the same and then get mapped at a higher layer
-// 10. ui::Input implementations should handle whether the input creates a single or multiple actual inputs and handle 
+// 10. ui::Input implementations should handle whether the input creates a single or multiple actual inputs and handle
 //     the relevant messages
-
 
 // user impls this on their local type, say 'DecimalInput'
 // then the user impls the ui rendering as inherent fns on that type
@@ -178,6 +177,15 @@ pub trait UserInput {
     type Input;
     fn update(&mut self, input: Self::Input);
     fn parse(&self) -> Result<Self::Output>;
+    fn set_value(&mut self, data: Self::Output);
+}
+
+// This can be optionally implemented, and provides a convenience
+// for implementing
+// this is most useful when the underlying type implments default
+// as then there is no need to implement the new function
+pub trait SetFromOutput<O>: UserInput<Output = O> {
+    fn set_value(&mut self, data: O);
 }
 
 /// By convention, users should create a `new` style function that takes a Self::Output, some other
